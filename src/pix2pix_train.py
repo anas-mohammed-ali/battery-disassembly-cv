@@ -10,29 +10,32 @@ from PIL import Image
 # 1. Dataset Class for Paired Data   #
 ######################################
 class PairedDataset(Dataset):
-    """
-    Expects two folders: 'masks' and 'images' inside a root directory.
-    Each file in 'masks' should have a corresponding file in 'images'.
-    """
-    def __init__(self, root_dir, transform=None):
-        self.masks_dir = os.path.join('data/masks')
-        self.images_dir = os.path.join(root_dir, 'train')
-        self.mask_files = sorted(os.listdir(self.masks_dir))
+    def __init__(self, images_dir, masks_dir, transform=None):
+        self.images_dir = images_dir
+        self.masks_dir = masks_dir
         self.image_files = sorted(os.listdir(self.images_dir))
+        self.mask_files = sorted(os.listdir(self.masks_dir))
         self.transform = transform
 
     def __len__(self):
-        return len(self.mask_files)
+        return len(self.image_files)
 
     def __getitem__(self, idx):
-        mask_path = os.path.join(self.masks_dir, self.mask_files[idx])
+        # Build full paths
         image_path = os.path.join(self.images_dir, self.image_files[idx])
-        mask = Image.open(mask_path).convert('RGB')
+        mask_path = os.path.join(self.masks_dir, self.mask_files[idx])
+
+        # Open images
         image = Image.open(image_path).convert('RGB')
+        mask = Image.open(mask_path).convert('RGB')
+
+        # Apply transforms
         if self.transform:
-            mask = self.transform(mask)
             image = self.transform(image)
+            mask = self.transform(mask)
+
         return mask, image
+
 
 ######################################
 # 2. Define the U-Net Generator      #
@@ -125,7 +128,12 @@ transform = transforms.Compose([
 ])
 
 # Create dataset and dataloader from the 'data/train' folder
-dataset = PairedDataset(root_dir='data/images', transform=transform)
+dataset = PairedDataset(
+    images_dir='data/images/train',
+    masks_dir='data/masks/train',
+    transform=transform
+)
+
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 # Initialize generator and discriminator
