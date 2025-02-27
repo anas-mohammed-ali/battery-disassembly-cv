@@ -1,0 +1,9 @@
+train: data/images/train
+val: data/images/val
+test: data/images/test  # optional
+
+# Number of classes
+nc: 2
+
+# Class names
+names: ['screw', 'battery']
